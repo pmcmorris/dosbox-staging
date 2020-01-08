@@ -100,6 +100,9 @@ typedef struct dir_struct {
 
 #endif
 
+// TODO mkdir (maybe as C++17 filesystem::create_directory? -ies?)
+// TODO rmdir (C++17 filesystem::remove?)
+
 dir_information* open_directory(const char* dirname);
 bool read_directory_first(dir_information* dirp, char* entry_name, bool& is_directory);
 bool read_directory_next(dir_information* dirp, char* entry_name, bool& is_directory);

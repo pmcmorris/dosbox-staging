@@ -16,18 +16,16 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-
 #ifndef DOSBOX_SUPPORT_H
 #define DOSBOX_SUPPORT_H
+
+#include "dosbox.h"
 
 #include <algorithm>
 #include <cstdio>
 #include <ctype.h>
-#include <string.h>
+#include <cstring>
 #include <string>
-#ifndef DOSBOX_DOSBOX_H
-#include "dosbox.h"
-#endif
 
 #ifdef _MSC_VER
 #define strcasecmp(a, b) _stricmp(a, b)
@@ -61,7 +59,13 @@ char * safe_strcat(char (& dst)[N], const char * src) noexcept {
 	return & dst[0];
 }
 
-#define safe_strncpy(a,b,n) do { strncpy((a),(b),(n)-1); (a)[(n)-1] = 0; } while (0)
+// MSVC complains about strncpy, but strncpy_s is not available in C++ standard
+// (it is part of C11).
+// TODO: safe_strncpy using strncpy_s
+
+#define safe_strncpy(a, b, n) do { strncpy((a),(b),(n)-1); (a)[(n)-1] = 0; } while (0)
+
+// TODO strtok (strtok_s)
 
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
