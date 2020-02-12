@@ -527,7 +527,7 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(sdl.displayNumber),
 			width,
 			height,
-			((screenType == SCREEN_OPENGL) ? SDL_WINDOW_OPENGL : 0) | SDL_WINDOW_SHOWN
+			((screenType == SCREEN_OPENGL) ? SDL_WINDOW_OPENGL : 0) | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
 		);
 
 		if (!sdl.window) {
@@ -639,6 +639,7 @@ static SDL_Window * GFX_SetupWindowScaled(SCREEN_TYPES screenType)
 			sdl.clip.x = (Sint16)((windowWidth - sdl.clip.w) / 2);
 			sdl.clip.y = (Sint16)((fixedHeight - sdl.clip.h) / 2);
 		} else {
+			fprintf(stderr, ":: reset clip (1)\n");
 			sdl.clip.x = 0;
 			sdl.clip.y = 0;
 		}
@@ -646,7 +647,9 @@ static SDL_Window * GFX_SetupWindowScaled(SCREEN_TYPES screenType)
 		return sdl.window;
 
 	} else {
-		sdl.clip.x=0;sdl.clip.y=0;
+		fprintf(stderr, ":: reset clip (2)\n");
+		sdl.clip.x=0;
+		sdl.clip.y=0;
 		sdl.clip.w=(Bit16u)(sdl.draw.width*sdl.draw.scalex);
 		sdl.clip.h=(Bit16u)(sdl.draw.height*sdl.draw.scaley);
 		sdl.window = GFX_SetSDLWindowMode(sdl.clip.w, sdl.clip.h, sdl.desktop.fullscreen, screenType);
@@ -1928,9 +1931,39 @@ void GFX_HandleVideoResize(int width, int height)
 	 * in SDL_SetSDLWindowSurface by setting sdl.update_display_contents
 	 * to false.
 	 */
-	sdl.resizing_window = true;
-	GFX_ResetScreen();
-	sdl.resizing_window = false;
+
+	fprintf(stderr, "resize: %d %d %f %f\n",
+			sdl.draw.width, sdl.draw.height, sdl.draw.scalex, sdl.draw.scaley);
+
+	const double prog_aspect_ratio = (sdl.draw.width * sdl.draw.scalex) / (sdl.draw.height * sdl.draw.scaley);
+	const double win_aspect_ratio = double(width) / double(height);
+
+	fprintf(stderr, "ratios: %f %f\n", prog_aspect_ratio, win_aspect_ratio);
+
+	if (prog_aspect_ratio > win_aspect_ratio) {
+		// match window width
+		fprintf(stderr, "match w\n");
+		sdl.clip.w = width;
+		sdl.clip.h = width / prog_aspect_ratio;
+		sdl.clip.x = 0;
+		sdl.clip.y = (height - sdl.clip.h) / 2;
+	} else {
+		// match window height
+		fprintf(stderr, "match h\n");
+		sdl.clip.w = height * prog_aspect_ratio;
+		sdl.clip.h = height;
+		sdl.clip.x = (width - sdl.clip.w) / 2;
+		sdl.clip.y = 0;
+	}
+
+	glViewport(sdl.clip.x, sdl.clip.y, sdl.clip.w, sdl.clip.h);
+
+	// sdl.window = GFX_SetSDLWindowMode(sdl.clip.w, sdl.clip.h,
+	// 		sdl.desktop.fullscreen, SCREEN_OPENGL);
+
+	// sdl.resizing_window = true;
+	// GFX_ResetScreen();
+	// sdl.resizing_window = false;
 }
 
 void GFX_Events() {
