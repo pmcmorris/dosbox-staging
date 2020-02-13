@@ -1964,7 +1964,8 @@ static void GFX_HandleVideoResize(int width, int height)
 		sdl.clip.y = 0;
 	}
 
-	glViewport(sdl.clip.x, sdl.clip.y, sdl.clip.w, sdl.clip.h);
+	if (sdl.desktop.type == SCREEN_OPENGL)
+		glViewport(sdl.clip.x, sdl.clip.y, sdl.clip.w, sdl.clip.h);
 
 	// sdl.window = GFX_SetSDLWindowMode(sdl.clip.w, sdl.clip.h,
 	// 		sdl.desktop.fullscreen, SCREEN_OPENGL);
@@ -1999,6 +2000,7 @@ void GFX_Events() {
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
 		case SDL_WINDOWEVENT:
+			fprintf(stderr, ":: %d\n", event.window.event);
 			switch (event.window.event) {
 				case SDL_WINDOWEVENT_RESTORED:
 					/* We may need to re-create a texture
