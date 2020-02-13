@@ -161,6 +161,8 @@ extern char** environ;
 #define PRIO_TOTAL (PRIO_MAX-PRIO_MIN)
 #endif
 
+static void GFX_HandleVideoResize(int width, int height);
+
 SDL_bool mouse_is_captured = SDL_FALSE; // global for mapper
 
 enum MouseControlType {
@@ -558,11 +560,13 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 		                        sdl.desktop.full.display_res ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN);
 	} else {
 		SDL_SetWindowFullscreen(sdl.window, 0);
-		SDL_SetWindowSize(sdl.window, width, height);
 	}
 	// Maybe some requested fullscreen resolution is unsupported?
 finish:
+
 	SDL_GetWindowSize(sdl.window, &currWidth, &currHeight);
+	GFX_HandleVideoResize(currWidth, currHeight);
+
 	sdl.update_display_contents = ((width <= currWidth) && (height <= currHeight));
 	return sdl.window;
 }
@@ -728,6 +732,7 @@ static bool GFX_LoadGLShaders(const char *src, GLuint *vertex, GLuint *fragment)
 #endif
 
 Bitu GFX_SetSize(Bitu width,Bitu height,Bitu flags,double scalex,double scaley,GFX_CallBack_t callback) {
+	fprintf(stderr, ":: set_size %d %d\n", width, height);
 	if (sdl.updating)
 		GFX_EndUpdate( 0 );
 
@@ -1909,8 +1914,10 @@ bool GFX_IsFullscreen(void) {
 #define DB_POLLSKIP 1
 #endif
 
-void GFX_HandleVideoResize(int width, int height)
+static void GFX_HandleVideoResize(int width, int height)
 {
+	fprintf(stderr, "resize: %d %d\n", width, height);
+
 	/* Maybe a screen rotation has just occurred, so we simply resize.
 	There may be a different cause for a forced resized, though.    */
 	if (sdl.desktop.full.display_res && sdl.desktop.fullscreen) {
@@ -1932,13 +1939,12 @@ void GFX_HandleVideoResize(int width, int height)
 	 * to false.
 	 */
 
-	fprintf(stderr, "resize: %d %d %f %f\n",
-			sdl.draw.width, sdl.draw.height, sdl.draw.scalex, sdl.draw.scaley);
+	//fprintf(stderr, "resize: %d %d %f %f\n", sdl.draw.width, sdl.draw.height, sdl.draw.scalex, sdl.draw.scaley);
 
 	const double prog_aspect_ratio = (sdl.draw.width * sdl.draw.scalex) / (sdl.draw.height * sdl.draw.scaley);
 	const double win_aspect_ratio = double(width) / double(height);
 
-	fprintf(stderr, "ratios: %f %f\n", prog_aspect_ratio, win_aspect_ratio);
+	// fprintf(stderr, "ratios: %f %f\n", prog_aspect_ratio, win_aspect_ratio);
 
 	if (prog_aspect_ratio > win_aspect_ratio) {
 		// match window width
