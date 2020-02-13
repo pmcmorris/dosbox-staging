@@ -567,6 +567,8 @@ finish:
 	SDL_GetWindowSize(sdl.window, &currWidth, &currHeight);
 	GFX_HandleVideoResize(currWidth, currHeight);
 
+	SDL_SetWindowMinimumSize(sdl.window, width, height);
+
 	sdl.update_display_contents = ((width <= currWidth) && (height <= currHeight));
 	return sdl.window;
 }
@@ -732,7 +734,7 @@ static bool GFX_LoadGLShaders(const char *src, GLuint *vertex, GLuint *fragment)
 #endif
 
 Bitu GFX_SetSize(Bitu width,Bitu height,Bitu flags,double scalex,double scaley,GFX_CallBack_t callback) {
-	fprintf(stderr, ":: set_size %d %d\n", width, height);
+	//fprintf(stderr, ":: set_size %d %d\n", width, height);
 	if (sdl.updating)
 		GFX_EndUpdate( 0 );
 
