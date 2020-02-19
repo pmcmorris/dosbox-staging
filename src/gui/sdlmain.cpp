@@ -350,6 +350,43 @@ static int SDL_Init_Wrapper(void)
 	return SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO);
 }
 
+static void free_sdl_texture_renderer()
+{
+	if (sdl.texture.pixelFormat) {
+		SDL_FreeFormat(sdl.texture.pixelFormat);
+		sdl.texture.pixelFormat = nullptr;
+	}
+
+	if (sdl.texture.texture) {
+		SDL_DestroyTexture(sdl.texture.texture);
+		sdl.texture.texture = nullptr;
+	}
+
+	if (sdl.renderer) {
+		SDL_DestroyRenderer(sdl.renderer);
+		sdl.renderer = nullptr;
+	}
+
+#if C_OPENGL
+	if (sdl.opengl.context) {
+		SDL_GL_DeleteContext(sdl.opengl.context);
+		sdl.opengl.context = nullptr;
+	}
+#endif
+}
+
+static void SDL_Quit_Wrapper()
+{
+	free_sdl_texture_renderer();
+
+	if (sdl.window) {
+		SDL_DestroyWindow(sdl.window);
+		sdl.window = nullptr;
+	}
+
+	SDL_Quit();
+}
+
 extern const char* RunningProgram;
 extern bool CPU_CycleAutoAdjust;
 //Globals for keyboard initialisation
@@ -508,24 +545,9 @@ static int int_log2 (int val) {
 static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fullscreen, SCREEN_TYPES screenType)
 {
 	static SCREEN_TYPES lastType = SCREEN_SURFACE;
-	if (sdl.renderer) {
-		SDL_DestroyRenderer(sdl.renderer);
-		sdl.renderer = 0;
-	}
-	if (sdl.texture.pixelFormat) {
-		SDL_FreeFormat(sdl.texture.pixelFormat);
-		sdl.texture.pixelFormat = 0;
-	}
-	if (sdl.texture.texture) {
-		SDL_DestroyTexture(sdl.texture.texture);
-		sdl.texture.texture = 0;
-	}
-#if C_OPENGL
-	if (sdl.opengl.context) {
-		SDL_GL_DeleteContext(sdl.opengl.context);
-		sdl.opengl.context = 0;
-	}
-#endif
+
+	free_sdl_texture_renderer();
+
 	int currWidth, currHeight;
 	if (sdl.window && sdl.resizing_window) {
 		SDL_GetWindowSize(sdl.window, &currWidth, &currHeight);
@@ -2374,7 +2396,7 @@ void restart_program(std::vector<std::string> & parameters) {
 	newargs[parameters.size()] = NULL;
 	MIXER_CloseAudioDevice();
 	SDL_Delay(50);
-	SDL_Quit();
+	SDL_Quit_Wrapper();
 #if C_DEBUG
 	// shutdown curses
 	DEBUG_ShutDown(NULL);
@@ -2566,7 +2588,7 @@ int main(int argc, char* argv[]) {
 		E_Exit("Can't init SDL %s", SDL_GetError());
 	sdl.inited = true;
 	// Once initialized, ensure we clean up SDL for all exit conditions
-	atexit(SDL_Quit);
+	atexit(SDL_Quit_Wrapper);
 
 #ifndef DISABLE_JOYSTICK
 	//Initialise Joystick separately. This way we can warn when it fails instead
