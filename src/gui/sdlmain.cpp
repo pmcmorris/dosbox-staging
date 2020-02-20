@@ -507,6 +507,8 @@ static int int_log2 (int val) {
 
 static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fullscreen, SCREEN_TYPES screenType)
 {
+	fprintf(stderr, ":: set window mode: %dx%d type %d\n", width, height, screenType);
+
 	static SCREEN_TYPES lastType = SCREEN_SURFACE;
 	if (sdl.renderer) {
 		SDL_DestroyRenderer(sdl.renderer);
@@ -537,6 +539,8 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 	 */
 	if (!sdl.window || (lastType != screenType)) {
 		lastType = screenType;
+
+		fprintf(stderr, ":: create window\n");
 
 		if (sdl.window) {
 			SDL_DestroyWindow(sdl.window);
@@ -2077,10 +2081,14 @@ void GFX_Events() {
 					GFX_UpdateMouseAfterExposure();
 					continue;
 				case SDL_WINDOWEVENT_FOCUS_GAINED:
+					fprintf(stderr, ":: focus gained (window: %d)\n",
+					        event.window.windowID);
 					SetPriority(sdl.priority.focus);
 					CPU_Disable_SkipAutoAdjust();
 					break;
 				case SDL_WINDOWEVENT_FOCUS_LOST:
+					fprintf(stderr, ":: focus lost (window: %d)\n",
+					        event.window.windowID);
 #ifdef WIN32
 					if (sdl.desktop.fullscreen) {
 						VGA_KillDrawing();
