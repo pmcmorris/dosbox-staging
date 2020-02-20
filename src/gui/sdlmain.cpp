@@ -1279,10 +1279,12 @@ bool GFX_LazyFullscreenRequested(void) {
 }
 
 bool GFX_StartUpdate(Bit8u * & pixels,Bitu & pitch) {
+	fprintf(stderr, ":: gfx_start_update\n");
 	if (!sdl.update_display_contents)
 		return false;
 	if (!sdl.active || sdl.updating)
 		return false;
+	fprintf(stderr, ":: gfx_start_update ...\n");
 	switch (sdl.desktop.type) {
 	case SCREEN_SURFACE:
 		pixels = (Bit8u *)sdl.surface->pixels;
@@ -1324,10 +1326,12 @@ bool GFX_StartUpdate(Bit8u * & pixels,Bitu & pitch) {
 
 
 void GFX_EndUpdate( const Bit16u *changedLines ) {
+	fprintf(stderr, ":: gfx_end_update\n");
 	if (!sdl.update_display_contents)
 		return;
 	if (((sdl.desktop.type != SCREEN_OPENGL) || !RENDER_GetForceUpdate()) && !sdl.updating)
 		return;
+	fprintf(stderr, ":: gfx_end_update ...\n");
 	bool actually_updating = sdl.updating;
 	sdl.updating=false;
 	switch (sdl.desktop.type) {
@@ -1426,12 +1430,14 @@ Bitu GFX_GetRGB(Bit8u red,Bit8u green,Bit8u blue) {
 }
 
 void GFX_Stop() {
+	fprintf(stderr, ":: gfx_stop\n");
 	if (sdl.updating)
 		GFX_EndUpdate( 0 );
 	sdl.active=false;
 }
 
 void GFX_Start() {
+	fprintf(stderr, ":: gfx_start\n");
 	sdl.active=true;
 }
 
@@ -1761,6 +1767,46 @@ static void GUI_StartUp(Section * sec) {
 	GFX_Stop();
 	SDL_SetWindowTitle(sdl.window, "DOSBox");
 
+	/////////////////////
+	GFX_Start();
+	uint8_t *buf = nullptr;
+	Bitu pitch;
+
+	sdl.draw.width = 640; // <- this is necessary for surface… only?
+	sdl.draw.height = 400;
+
+	uint8_t *splash_data = new uint8_t[640 * 400 * 3]; //?
+	GIMP_IMAGE_RUN_LENGTH_DECODE(splash_data, gimp_image.rle_pixel_data, 640 * 400, 3);
+
+	bool ok = GFX_StartUpdate(buf, pitch);
+	fprintf(stderr, ":: start update status: %d pitch: %d\n", ok, pitch);
+	assert(buf);
+
+	uint32_t *pixels = reinterpret_cast<uint32_t *>(buf);
+	size_t i = 0;
+	for (size_t y = 0; y < 400; ++y) {
+		const uint8_t *row = splash_data  + y * (640 * 3);
+		for (size_t x = 0; x < 640; ++x) {
+			const uint32_t r = row[x * 3];
+			const uint32_t g = row[x * 3 + 1];
+			const uint32_t b = row[x * 3 + 2];
+			pixels[i++] = (r << 16) | (g << 8) | b;
+		}
+	}
+
+	// 'lines' is necessary only for surface?
+	// don't ask my is it designed this way; every *second* value in the array
+	// puts a value in sdl.updateRects to define lines, that should be updated
+	uint16_t lines[2] = {0, 400};
+	GFX_EndUpdate(lines);
+
+	SDL_Delay(1000);
+	GFX_Stop();
+	/////////////////////
+
+	fprintf(stderr, ":: splash 1\n");
+#if 0
+
 /* The endian part is intentionally disabled as somehow it produces correct results without according to rhoenie*/
 //#if SDL_BYTEORDER == SDL_BIG_ENDIAN
 //    Bit32u rmask = 0xff000000;
@@ -1833,6 +1879,7 @@ static void GUI_StartUp(Section * sec) {
 		SDL_FreeSurface(splash_surf);
 		delete [] tmpbufp;
 	}
+#endif
 
 	// Apply the user's mouse settings
 	Section_prop* s = section->Get_multival("capture_mouse")->GetSection();
