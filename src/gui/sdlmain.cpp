@@ -1748,12 +1748,29 @@ static void GUI_StartUp(Section * sec) {
 
 #endif	//OPENGL
 	/* Initialize screen for first time */
+
+
+
+	sdl.desktop.type = sdl.desktop.want_type;
+	if (!GFX_SetSDLWindowMode(640, 400, false, sdl.desktop.want_type))
+		E_Exit("Grrr: %s", SDL_GetError());
+
+	if (sdl.desktop.type == SCREEN_SURFACE) { // want_type == type == surface
+		sdl.surface = SDL_GetWindowSurface(sdl.window);
+		if (sdl.surface == NULL)
+			E_Exit("Could not retrieve window surface: %s", SDL_GetError());
+	}
+
+#if 0
 	if (!GFX_SetSDLSurfaceWindow(640, 400))
 		E_Exit("Could not initialize video: %s", SDL_GetError());
 	sdl.surface = SDL_GetWindowSurface(sdl.window);
 	if (sdl.surface == NULL)
 		E_Exit("Could not retrieve window surface: %s", SDL_GetError());
+#endif
+
 	SDL_Rect splash_rect = GFX_GetSDLSurfaceSubwindowDims(640, 400);
+#if 0
 	sdl.desktop.sdl2pixelFormat = sdl.surface->format->format;
 	LOG_MSG("SDL:Current window pixel format: %s",
 	        SDL_GetPixelFormatName(sdl.desktop.sdl2pixelFormat));
@@ -1764,6 +1781,8 @@ static void GUI_StartUp(Section * sec) {
 	if (sdl.desktop.bpp==24) {
 		LOG_MSG("SDL: You are running in 24 bpp mode, this will slow down things!");
 	}
+#endif
+
 	GFX_Stop();
 	SDL_SetWindowTitle(sdl.window, "DOSBox");
 
