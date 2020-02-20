@@ -1752,7 +1752,7 @@ static void GUI_StartUp(Section * sec) {
 
 
 	sdl.desktop.type = sdl.desktop.want_type;
-	if (!GFX_SetSDLWindowMode(640, 400, false, sdl.desktop.want_type))
+	if (!GFX_SetSDLWindowMode(640, 400, sdl.desktop.fullscreen, sdl.desktop.want_type))
 		E_Exit("Grrr: %s", SDL_GetError());
 
 	/*
