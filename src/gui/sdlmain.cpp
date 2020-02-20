@@ -481,6 +481,8 @@ check_surface:
 
 
 void GFX_ResetScreen(void) {
+	fprintf(stderr, ":: reset screen\n");
+
 	GFX_Stop();
 	if (sdl.draw.callback)
 		(sdl.draw.callback)( GFX_CallBackReset );
@@ -581,6 +583,10 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 		 */
 		const auto pos = get_default_pos(fullscreen);
 		const uint32_t flags = (screenType == SCREEN_OPENGL) ? SDL_WINDOW_OPENGL : 0;
+
+		if (fullscreen)
+			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+
 		sdl.window = SDL_CreateWindow("", pos.x, pos.y, width, height, flags);
 
 		if (!sdl.window) {
@@ -589,9 +595,11 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 
 		GFX_SetTitle(-1, -1, false); // refresh title.
 
+		/*
 		if (!fullscreen) {
 			goto finish;
 		}
+		*/
 	}
 	/* Fullscreen mode switching has its limits, and is also problematic on
 	 * some window managers. For now, the following may work up to some
@@ -1150,8 +1158,9 @@ dosurface:
 		goto dosurface;
 		break;
 	}//CASE
-	if (retFlags)
+	if (retFlags) {
 		GFX_Start();
+	}
 	return retFlags;
 }
 
@@ -1245,6 +1254,8 @@ void sticky_keys(bool restore){
 #endif
 
 void GFX_SwitchFullScreen(void) {
+	fprintf(stderr, ":: switch fullscreen\n");
+
 #if defined (WIN32)
 	// We are about to switch to the opposite of our current mode
 	// (ie: opposite of whatever sdl.desktop.fullscreen holds).
@@ -1253,6 +1264,7 @@ void GFX_SwitchFullScreen(void) {
 	sticky_keys(sdl.desktop.fullscreen);
 #endif
 	sdl.desktop.fullscreen = !sdl.desktop.fullscreen;
+
  	GFX_ResetScreen();
 }
 
