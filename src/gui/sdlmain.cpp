@@ -1279,12 +1279,12 @@ bool GFX_LazyFullscreenRequested(void) {
 }
 
 bool GFX_StartUpdate(Bit8u * & pixels,Bitu & pitch) {
-	fprintf(stderr, ":: gfx_start_update\n");
+	// fprintf(stderr, ":: gfx_start_update\n");
 	if (!sdl.update_display_contents)
 		return false;
 	if (!sdl.active || sdl.updating)
 		return false;
-	fprintf(stderr, ":: gfx_start_update ...\n");
+	// fprintf(stderr, ":: gfx_start_update ...\n");
 	switch (sdl.desktop.type) {
 	case SCREEN_SURFACE:
 		pixels = (Bit8u *)sdl.surface->pixels;
@@ -1326,12 +1326,12 @@ bool GFX_StartUpdate(Bit8u * & pixels,Bitu & pitch) {
 
 
 void GFX_EndUpdate( const Bit16u *changedLines ) {
-	fprintf(stderr, ":: gfx_end_update\n");
+	// fprintf(stderr, ":: gfx_end_update\n");
 	if (!sdl.update_display_contents)
 		return;
 	if (((sdl.desktop.type != SCREEN_OPENGL) || !RENDER_GetForceUpdate()) && !sdl.updating)
 		return;
-	fprintf(stderr, ":: gfx_end_update ...\n");
+	// fprintf(stderr, ":: gfx_end_update ...\n");
 	bool actually_updating = sdl.updating;
 	sdl.updating=false;
 	switch (sdl.desktop.type) {
@@ -1755,11 +1755,13 @@ static void GUI_StartUp(Section * sec) {
 	if (!GFX_SetSDLWindowMode(640, 400, false, sdl.desktop.want_type))
 		E_Exit("Grrr: %s", SDL_GetError());
 
+	/*
 	if (sdl.desktop.type == SCREEN_SURFACE) { // want_type == type == surface
 		sdl.surface = SDL_GetWindowSurface(sdl.window);
 		if (sdl.surface == NULL)
 			E_Exit("Could not retrieve window surface: %s", SDL_GetError());
 	}
+	*/
 
 #if 0
 	if (!GFX_SetSDLSurfaceWindow(640, 400))
@@ -1796,6 +1798,15 @@ static void GUI_StartUp(Section * sec) {
 
 	uint8_t *splash_data = new uint8_t[640 * 400 * 3]; //?
 	GIMP_IMAGE_RUN_LENGTH_DECODE(splash_data, gimp_image.rle_pixel_data, 640 * 400, 3);
+
+	const auto flags = GFX_GetBestMode(GFX_CAN_32); // FIXME this is very much a hack
+	GFX_SetSize(640, 400, flags, 1.0, 1.0, nullptr);
+
+	switch(sdl.desktop.type) {
+	case SCREEN_SURFACE: assert(sdl.surface); break;
+	case SCREEN_TEXTURE: assert(sdl.texture.texture); break;
+	case SCREEN_OPENGL:  assert(sdl.opengl.framebuf || sdl.opengl.pixel_buffer_object); break;
+	};
 
 	bool ok = GFX_StartUpdate(buf, pitch);
 	fprintf(stderr, ":: start update status: %d pitch: %d\n", ok, pitch);
