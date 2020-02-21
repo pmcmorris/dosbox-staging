@@ -235,6 +235,7 @@ struct SDL_Block {
 		} full;
 		struct {
 			Bit16u width, height;
+			std::string resolution_str;
 		} window;
 		Bit8u bpp;
 		Bit32u sdl2pixelFormat;
@@ -652,6 +653,28 @@ static SDL_Window * GFX_SetSDLOpenGLWindow(Bit16u width, Bit16u height)
 	// Android part used:
 	// return GFX_SetSDLWindowMode(sdl.desktop.full.width, sdl.desktop.full.height, true, SCREEN_OPENGL);
 	return GFX_SetSDLWindowMode(width, height, false, SCREEN_OPENGL);
+}
+
+static SDL_Window * SetupInitialWindow()
+{
+	if (sdl.desktop.fullscreen) {
+		return GFX_SetSDLWindowMode(sdl.desktop.full.width,
+		                            sdl.desktop.full.height,
+		                            sdl.desktop.fullscreen,
+		                            sdl.desktop.want_type);
+	}
+
+	if (sdl.desktop.window.resolution_str == "original") {
+		return GFX_SetSDLWindowMode(640,
+		                            400,
+		                            false,
+		                            sdl.desktop.want_type);
+	}
+
+	return GFX_SetSDLWindowMode(sdl.desktop.window.width,
+	                            sdl.desktop.window.height,
+	                            false,
+	                            sdl.desktop.want_type);
 }
 
 static SDL_Window * GFX_SetupWindowScaled(SCREEN_TYPES screenType)
@@ -1632,6 +1655,7 @@ static void GUI_StartUp(Section * sec) {
 	sdl.desktop.window.width  = 0;
 	sdl.desktop.window.height = 0;
 	const char* windowresolution=section->Get_string("windowresolution");
+	sdl.desktop.window.resolution_str = windowresolution;
 	if(windowresolution && *windowresolution) {
 		char res[100];
 		safe_strncpy( res,windowresolution, sizeof( res ));
@@ -1697,7 +1721,7 @@ static void GUI_StartUp(Section * sec) {
 
 #if C_OPENGL
 	if (sdl.desktop.want_type == SCREEN_OPENGL) { /* OPENGL is requested */
-		if (!GFX_SetSDLOpenGLWindow(640, 400)) {
+		if (!SetupInitialWindow()) {
 			LOG_MSG("Could not create OpenGL window, switching back to surface");
 			sdl.desktop.want_type = SCREEN_SURFACE;
 		} else {
@@ -1769,8 +1793,11 @@ static void GUI_StartUp(Section * sec) {
 
 
 	sdl.desktop.type = sdl.desktop.want_type;
-	if (!GFX_SetSDLWindowMode(640, 400, sdl.desktop.fullscreen, sdl.desktop.want_type))
-		E_Exit("Grrr: %s", SDL_GetError());
+	//if (!GFX_SetSDLWindowMode(640, 400, sdl.desktop.fullscreen, sdl.desktop.want_type))
+	//	E_Exit("Grrr: %s", SDL_GetError());
+
+	if (!SetupInitialWindow())
+		E_Exit("Damn...: %s", SDL_GetError());
 
 	/*
 	if (sdl.desktop.type == SCREEN_SURFACE) { // want_type == type == surface
