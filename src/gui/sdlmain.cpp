@@ -523,11 +523,27 @@ static window_pos get_default_pos(bool fullscreen)
 	//                                                                        
 	// To work around this problem, center the window manually based on
 	// the original drawing size, and not window size.
+	
+	fprintf(stderr, ">> %d\n", sdl.desktop.window.width);
+	fprintf(stderr, ">> %d\n", sdl.desktop.window.height);
 
-	if (fullscreen) {
-		const int x = (sdl.desktop.full.width - sdl.draw.width) / 2;
-		const int y = (sdl.desktop.full.height - sdl.draw.height) / 2;
+	//  FIXME FIXME FIXME!
+	//
+	// turns out overwriting UNDEFINED_DISPLAY here breaks the position when
+	// our splash screen starts in fullscreen!
+	//
+	// somewhat different solution is needed
+	// 
+	if (false) {
+		const int x = (sdl.desktop.full.width - sdl.desktop.window.width) / 2;
+		const int y = (sdl.desktop.full.height - sdl.desktop.window.height) / 2;
+		fprintf(stderr, "pos %d %d\n", x, y);
 		return { x, y };
+
+		// this is still broken... perhaps fixing Wayland window size will
+		// solve this (it ends up with 1920x1080 window).
+		//const int sdl_pos = SDL_WINDOWPOS_CENTERED_DISPLAY(sdl.displayNumber);
+		//return { sdl_pos, sdl_pos };
 	} else {
 		const int sdl_pos = SDL_WINDOWPOS_UNDEFINED_DISPLAY(sdl.displayNumber);
 		return { sdl_pos, sdl_pos };
@@ -657,24 +673,26 @@ static SDL_Window * GFX_SetSDLOpenGLWindow(Bit16u width, Bit16u height)
 
 static SDL_Window * SetupInitialWindow()
 {
+	const int width = sdl.desktop.window.width;
+	const int height = sdl.desktop.window.height;
+	const bool fix_win_size = (width <= 0) || (height <= 0);
+
+	if (sdl.desktop.window.resolution_str == "original" || fix_win_size) {
+		sdl.desktop.window.width = 640;
+		sdl.desktop.window.height = 400;
+	}
+
 	if (sdl.desktop.fullscreen) {
 		return GFX_SetSDLWindowMode(sdl.desktop.full.width,
 		                            sdl.desktop.full.height,
-		                            sdl.desktop.fullscreen,
+		                            true,
 		                            sdl.desktop.want_type);
-	}
-
-	if (sdl.desktop.window.resolution_str == "original") {
-		return GFX_SetSDLWindowMode(640,
-		                            400,
+	} else {
+		return GFX_SetSDLWindowMode(sdl.desktop.window.width,
+		                            sdl.desktop.window.height,
 		                            false,
 		                            sdl.desktop.want_type);
 	}
-
-	return GFX_SetSDLWindowMode(sdl.desktop.window.width,
-	                            sdl.desktop.window.height,
-	                            false,
-	                            sdl.desktop.want_type);
 }
 
 static SDL_Window * GFX_SetupWindowScaled(SCREEN_TYPES screenType)
@@ -1683,7 +1701,7 @@ static void GUI_StartUp(Section * sec) {
 		sdl.displayNumber = 0;
 		LOG_MSG("SDL:Display number out of bounds, switching back to 0");
 	}
-	sdl.displayNumber = 1;
+	sdl.displayNumber = 1; // interrupts!
 	sdl.desktop.full.display_res = sdl.desktop.full.fixed && (!sdl.desktop.full.width || !sdl.desktop.full.height);
 	if (sdl.desktop.full.display_res) {
 		GFX_ObtainDisplayDimensions();
