@@ -284,8 +284,8 @@ struct SDL_Block {
 	const char *rendererDriver;
 	int displayNumber;
 	struct {
-		SDL_Texture *texture;
-		SDL_PixelFormat *pixelFormat;
+		SDL_Texture *texture = nullptr;
+		SDL_PixelFormat *pixelFormat = nullptr;
 	} texture;
 	SDL_cond *cond;
 	struct {
@@ -555,18 +555,35 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 	fprintf(stderr, ":: set window mode: %dx%d type %d\n", width, height, screenType);
 
 	static SCREEN_TYPES lastType = SCREEN_SURFACE;
+
+	// No idea why these resources need to be destroyed now - this should
+	// rather be moved to GFX_SetSize, I think.
+	// Bad destroy order will trigger SDL internal asserts, so be careful here.
+
+	// texture creation order:
+	// window, renderer, texture, pixelformat
+	//
+	// opengl creation order:
+	// ??
+	//
+	// surface creation order:
+	// ??
+
+	if (sdl.texture.pixelFormat) {
+		SDL_FreeFormat(sdl.texture.pixelFormat);
+		sdl.texture.pixelFormat = nullptr;
+	}
+
+	if (sdl.texture.texture) {
+		SDL_DestroyTexture(sdl.texture.texture);
+		sdl.texture.texture = nullptr;
+	}
+
 	if (sdl.renderer) {
 		SDL_DestroyRenderer(sdl.renderer);
 		sdl.renderer = 0;
 	}
-	if (sdl.texture.pixelFormat) {
-		SDL_FreeFormat(sdl.texture.pixelFormat);
-		sdl.texture.pixelFormat = 0;
-	}
-	if (sdl.texture.texture) {
-		SDL_DestroyTexture(sdl.texture.texture);
-		sdl.texture.texture = 0;
-	}
+
 #if C_OPENGL
 	if (sdl.opengl.context) {
 		SDL_GL_DeleteContext(sdl.opengl.context);
@@ -604,7 +621,10 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 		if (fullscreen)
 			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
+		fprintf(stderr, ":: create window\n");
 		sdl.window = SDL_CreateWindow("", pos.x, pos.y, width, height, flags);
+
+		GFX_SetIcon();
 
 		if (!sdl.window) {
 			return sdl.window;
@@ -931,6 +951,8 @@ dosurface:
 		}
 		/* SDL_PIXELFORMAT_ARGB8888 is possible with most
 		rendering drivers, "opengles" being a notable exception */
+
+		fprintf(stderr, "::: create texture\n");
 		sdl.texture.texture = SDL_CreateTexture(sdl.renderer, SDL_PIXELFORMAT_ARGB8888,
 		                                        SDL_TEXTUREACCESS_STREAMING, width, height);
 		/* SDL_PIXELFORMAT_ABGR8888 (not RGB) is the
@@ -950,6 +972,8 @@ dosurface:
 		sdl.desktop.type=SCREEN_TEXTURE;
 		Uint32 pixelFormat;
 		SDL_QueryTexture(sdl.texture.texture, &pixelFormat, NULL, NULL, NULL);
+
+		fprintf(stderr, "::: create pixelformat\n");
 		sdl.texture.pixelFormat = SDL_AllocFormat(pixelFormat);
 		switch (SDL_BITSPERPIXEL(pixelFormat)) {
 			case 8:  retFlags = GFX_CAN_8;  break;
@@ -1618,7 +1642,7 @@ static void GUI_StartUp(Section * sec) {
 	sdl.resizing_window = false;
 	sdl.update_display_contents = true;
 
-	GFX_SetIcon();
+	// GFX_SetIcon();
 
 	sdl.desktop.lazy_fullscreen=false;
 	sdl.desktop.lazy_fullscreen_req=false;
