@@ -582,7 +582,7 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 		 * full screen, albeit it's still not perfect (at least on X11).
 		 */
 		const auto pos = get_default_pos(fullscreen);
-		const uint32_t flags = (screenType == SCREEN_OPENGL) ? SDL_WINDOW_OPENGL : 0;
+		uint32_t flags = (screenType == SCREEN_OPENGL) ? SDL_WINDOW_OPENGL : 0;
 
 		if (fullscreen)
 			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
@@ -1659,6 +1659,7 @@ static void GUI_StartUp(Section * sec) {
 		sdl.displayNumber = 0;
 		LOG_MSG("SDL:Display number out of bounds, switching back to 0");
 	}
+	sdl.displayNumber = 1;
 	sdl.desktop.full.display_res = sdl.desktop.full.fixed && (!sdl.desktop.full.width || !sdl.desktop.full.height);
 	if (sdl.desktop.full.display_res) {
 		GFX_ObtainDisplayDimensions();
