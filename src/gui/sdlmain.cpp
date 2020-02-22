@@ -548,16 +548,25 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 			return sdl.window;
 		}
 
+#if defined (WIN32)
+		// Force window position when going straight to fullscreen.
+		// Otherwise, SDL will reset window position to 0,0 when
+		// switching to a window for the first time. This is happening
+		// on every OS, but only on Windows it's a really big problem
+		// (because window decorations are rendered off-screen).
+		//
+		// To work around this problem, center the window manually based on
+		// the original drawing size, and not window size.
+		//
+		// On Linux this workaround breaks window position on
+		// multi-monitor setups, so let's use it on Windows only.
+
 		if (first_window && fullscreen) {
-			// Force window position when going straight to fullscreen.
-			// Otherwise, SDL will reset window position to 0,0 when leaving
-			// fullscreen (on every OS).
-			// To work around this problem, center the window manually based on
-			// the original drawing size, and not window size.
 			const int x = (sdl.desktop.full.width - sdl.draw.width) / 2;
 			const int y = (sdl.desktop.full.height - sdl.draw.height) / 2;
 			SDL_SetWindowPosition(sdl.window, x, y);
 		}
+#endif
 
 		GFX_SetTitle(-1, -1, false); // refresh title.
 
