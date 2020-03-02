@@ -237,7 +237,7 @@ foundit:
 		pages = (vga.vmemsize / pageSize)-1;
 	}
 	var_write(&minfo.NumberOfImagePages, pages);
-	var_write(&minfo.ModeAttributes, modeAttributes);
+	VAR_WRITE(minfo.ModeAttributes, static_cast<uint16_t>(modeAttributes));
 	var_write(&minfo.WinAAttributes, 0x7);	// Exists/readable/writable
 
 	if (mblock->type == M_TEXT) {
@@ -253,12 +253,13 @@ foundit:
 		VAR_WRITE(minfo.XResolution,    static_cast<uint16_t>(mblock->swidth));
 		VAR_WRITE(minfo.YResolution,    static_cast<uint16_t>(mblock->sheight));
 	}
-	var_write(&minfo.WinFuncPtr,int10.rom.set_window);
+	VAR_WRITE(minfo.WinFuncPtr, int10.rom.set_window);
 	var_write(&minfo.NumberOfBanks,0x1);
 	var_write(&minfo.Reserved_page,0x1);
 	var_write(&minfo.XCharSize,mblock->cwidth);
 	var_write(&minfo.YCharSize,mblock->cheight);
-	if (!int10.vesa_nolfb) var_write(&minfo.PhysBasePtr,S3_LFB_BASE);
+	if (!int10.vesa_nolfb)
+		VAR_WRITE(minfo.PhysBasePtr, S3_LFB_BASE);
 
 	MEM_BlockWrite(buf,&minfo,sizeof(MODE_INFO));
 	return VESA_SUCCESS;
