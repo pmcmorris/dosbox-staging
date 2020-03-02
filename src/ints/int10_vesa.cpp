@@ -240,18 +240,18 @@ foundit:
 	var_write(&minfo.ModeAttributes, modeAttributes);
 	var_write(&minfo.WinAAttributes, 0x7);	// Exists/readable/writable
 
-	if (mblock->type==M_TEXT) {
-		var_write(&minfo.WinGranularity,32);
-		var_write(&minfo.WinSize,32);
-		var_write(&minfo.WinASegment,0xb800);
-		var_write(&minfo.XResolution,mblock->twidth);
-		var_write(&minfo.YResolution,mblock->theight);
+	if (mblock->type == M_TEXT) {
+		VAR_WRITE(minfo.WinGranularity, static_cast<uint16_t>(32));
+		VAR_WRITE(minfo.WinSize,        static_cast<uint16_t>(32));
+		VAR_WRITE(minfo.WinASegment,    static_cast<uint16_t>(0xb800));
+		VAR_WRITE(minfo.XResolution,    static_cast<uint16_t>(mblock->twidth));
+		VAR_WRITE(minfo.YResolution,    static_cast<uint16_t>(mblock->theight));
 	} else {
-		var_write(&minfo.WinGranularity,64);
-		var_write(&minfo.WinSize,64);
-		var_write(&minfo.WinASegment,0xa000);
-		var_write(&minfo.XResolution,mblock->swidth);
-		var_write(&minfo.YResolution,mblock->sheight);
+		VAR_WRITE(minfo.WinGranularity, static_cast<uint16_t>(64));
+		VAR_WRITE(minfo.WinSize,        static_cast<uint16_t>(64));
+		VAR_WRITE(minfo.WinASegment,    static_cast<uint16_t>(0xa000));
+		VAR_WRITE(minfo.XResolution,    static_cast<uint16_t>(mblock->swidth));
+		VAR_WRITE(minfo.YResolution,    static_cast<uint16_t>(mblock->sheight));
 	}
 	var_write(&minfo.WinFuncPtr,int10.rom.set_window);
 	var_write(&minfo.NumberOfBanks,0x1);
