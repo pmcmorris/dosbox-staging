@@ -19,9 +19,9 @@
 #ifndef DOSBOX_MEM_H
 #define DOSBOX_MEM_H
 
-#ifndef DOSBOX_DOSBOX_H
 #include "dosbox.h"
-#endif
+
+#include <type_traits>
 
 typedef Bit32u PhysPt;
 typedef Bit8u * HostPt;
@@ -160,6 +160,19 @@ constexpr static INLINE uint32_t host_to_le(uint32_t val) {
 }
 
 #endif
+
+// Macro VAR_WRITE is a type-safe alternative for var_write functions,
+// except it does not generate address-of-packed-member compiler warning
+// when passing fields of packed structures and ensures correct byteswap.
+
+#define VAR_WRITE(var, val) do { \
+	static_assert(std::is_same<decltype(var), decltype(val)>::value, \
+	              "Parameters of VAR_WRITE macro must have the same type " \
+	              "to assure correct byteswap on big-endian architecures."); \
+	var = host_to_le(val); \
+} while (0);
+
+// var_write is legacy function for byte; use VAR_WRITE instead
 
 static INLINE void var_write(Bit8u * var, Bit8u val) {
 	host_writeb(var, val);
