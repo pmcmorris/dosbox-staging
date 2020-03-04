@@ -2492,7 +2492,7 @@ static void erasemapperfile() {
 	std::string path,file=MAPPERFILE;
 	Cross::GetPlatformConfigDir(path);
 	path += file;
-	FILE* f = fopen(path.c_str(),"r");
+	FILE *f = fopen(path.c_str(),"r");
 	if(!f) exit(0);
 	fclose(f);
 	unlink(path.c_str());
