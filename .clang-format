@@ -22,6 +22,8 @@ Language: Cpp
 #                  argument2);
 AlignAfterOpenBracket: Align
 
+
+
 # Don't align consecutive assignments
 # int aaaa = 12;
 # int b = 14;
@@ -49,8 +51,24 @@ AlignOperands: true
 # int b = 2; // Comment b
 AlignTrailingComments: false
 
-# By default don't allow putting parameters onto the next line
-# myFunction(foo, bar, baz);
+# When calling a function, don't allow putting parameters onto the next line:
+#
+# myFunction(a, b, c, 
+#            d, e);
+#
+# NOT:
+# myFunction(
+# 	a, b, c, d, e);
+#
+AllowAllArgumentsOnNextLine: false
+
+# When declaring a function, don't allow putting parameters onto the next line:
+#
+# void myFunction(int a, int b, int c, int d, int e);
+#
+# NOT:
+# void myFunction(
+# 	int a, int b, int c, int d, int e);
 AllowAllParametersOfDeclarationOnNextLine: false
 
 # Don't allow short braced statements to be on a single line
