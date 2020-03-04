@@ -1,4 +1,4 @@
-# This file is an example configuration for clang-format 5.0.
+# This file is an example configuration for clang-format 9.0.
 #
 # Note that this style definition should only be understood as a hint
 # for writing new code. The rules are still work-in-progress and does
@@ -7,15 +7,19 @@
 # Use tabs whenever we need to fill whitespace that spans at least from one tab
 # stop to the next one.
 #
-# These settings are mirrored in .editorconfig.  Keep them in sync.
-UseTab: Always
+UseTab: ForIndentation
 TabWidth: 8
 IndentWidth: 8
 ContinuationIndentWidth: 8
-ColumnLimit: 80
 
-# C Language specifics
+# Ideally, aim for 80 columns, but we don't want to count PenaltyExcessCharacter
+# until going past 90 columns.
+#
+ColumnLimit: 90
+
+# C/C++ Language specifics
 Language: Cpp
+Standard: Cpp11  # in clang-format 11: c++11
 
 # Align parameters on the open bracket
 # someLongFunction(argument1,
@@ -106,6 +110,15 @@ BreakBeforeBraces: Linux
 #              ccccccccccc;
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: false
+
+# FIXME describe
+#
+BreakConstructorInitializers: BeforeColon
+
+# FIXME describe
+#
+# ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 8
 
 # Don't break string literals
 BreakStringLiterals: false
