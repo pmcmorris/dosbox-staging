@@ -557,7 +557,7 @@ bool XGA_CheckX(void) {
 	return newline;
 }
 
-static void DrawWaitSub(Bitu mixmode, Bitu srcval)
+static void DrawWaitSub(uint32_t mixmode, Bitu srcval)
 {
 	Bitu destval;
 	Bitu dstdata;
@@ -571,19 +571,21 @@ static void DrawWaitSub(Bitu mixmode, Bitu srcval)
 	XGA_CheckX();
 }
 
-void XGA_DrawWait(Bitu val, Bitu len) {
-	if(!xga.waitcmd.wait) return;
-	Bitu mixmode = (xga.pix_cntl >> 6) & 0x3;
+void XGA_DrawWait(Bitu val, Bitu len)
+{
+	if (!xga.waitcmd.wait)
+		return;
+	uint32_t mixmode = (xga.pix_cntl >> 6) & 0x3;
 	Bitu srcval;
 	Bitu chunksize = 0;
 	Bitu chunks = 0;
 	switch(xga.waitcmd.cmd) {
 		case 2: /* Rectangle */
-			switch(mixmode) {
+			switch (mixmode) {
 				case 0x00: /* FOREMIX always used */
 					mixmode = xga.foremix;
 
-/*					switch((mixmode >> 5) & 0x03) {
+/*					switch ((mixmode >> 5) & 0x03)
 						case 0x00: // Src is background color
 							srcval = xga.backcolor;
 							break;
@@ -592,24 +594,24 @@ void XGA_DrawWait(Bitu val, Bitu len) {
 							break;
 						case 0x02: // Src is pixel data from PIX_TRANS register
 */
-					if(((mixmode >> 5) & 0x03) != 0x2) {
+					if (((mixmode >> 5) & 0x03) != 0x2) {
 						// those cases don't seem to occur
 						LOG_MSG("XGA: unsupported drawwait operation");
 						break;
 					}
 					switch(xga.waitcmd.buswidth) {
-						case M_LIN8:		//  8 bit
+						case M_LIN8: // 8 bit
 							DrawWaitSub(mixmode, val);
 							break;
 						case 0x20 | M_LIN8: // 16 bit 
-							for(Bitu i = 0; i < len; i++) {
-								DrawWaitSub(mixmode, (val>>(8*i))&0xff);
+							for (Bitu i = 0; i < len; i++) {
+								DrawWaitSub(mixmode, (val >> (8 * i)) & 0xff);
 								if(xga.waitcmd.newline) break;
 							}
 							break;
 						case 0x40 | M_LIN8: // 32 bit
 							for (int i = 0; i < 4; ++i)
-								DrawWaitSub(mixmode, (val>>(8*i))&0xff);
+								DrawWaitSub(mixmode, (val >> (8 * i)) & 0xff);
 							break;
 						case (0x20 | M_LIN32):
 							if(len!=4) { // Win 3.11 864 'hack?'
@@ -635,9 +637,9 @@ void XGA_DrawWait(Bitu val, Bitu len) {
 							break;
 						case 0x40 | M_LIN15: // 32 bit 
 						case 0x40 | M_LIN16: // 32 bit 
-							DrawWaitSub(mixmode, val&0xffff);
+							DrawWaitSub(mixmode, val & 0xffff);
 							if (!xga.waitcmd.newline)
-								DrawWaitSub(mixmode, val>>16);
+								DrawWaitSub(mixmode, val >> 16);
 							break;
 						default:
 							// Let's hope they never show up ;)
@@ -671,15 +673,13 @@ void XGA_DrawWait(Bitu val, Bitu len) {
 					
 					for(Bitu k = 0; k < chunks; k++) { // chunks counter
 						xga.waitcmd.newline = false;
-						for(Bitu n = 0; n < chunksize; n++) { // pixels
-							Bitu mixmode;
-							
+						for (Bitu n = 0; n < chunksize; ++n) { // pixels
 							// This formula can rule the world ;)
 							Bitu mask = 1 << ((((n&0xF8)+(8-(n&0x7)))-1)+chunksize*k);
-							if(val&mask) mixmode = xga.foremix;
-							else mixmode = xga.backmix;
-							
-							switch((mixmode >> 5) & 0x03) {
+
+							const uint32_t mixmode = (val & mask) ? xga.foremix:
+							                                        xga.backmix;
+							switch ((mixmode >> 5) & 0x03) {
 								case 0x00: // Src is background color
 									srcval = xga.backcolor;
 									break;
@@ -709,7 +709,7 @@ void XGA_DrawWait(Bitu val, Bitu len) {
 				default:
 					LOG_MSG("XGA: DrawBlitWait: Unhandled mixmode: %d", mixmode);
 					break;
-			} // switch mixmode
+			} // mixmode switch
 			break;
 		default:
 			LOG_MSG("XGA: Unhandled draw command %x", xga.waitcmd.cmd);
