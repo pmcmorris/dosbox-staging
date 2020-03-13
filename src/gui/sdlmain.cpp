@@ -221,6 +221,8 @@ enum PRIORITY_LEVELS {
 	PRIORITY_LEVEL_HIGHEST
 };
 
+SDL_Surface* surface_test;
+
 struct SDL_Block {
 	bool inited;
 	bool active;							//If this isn't set don't draw
@@ -988,6 +990,9 @@ dosurface:
 		rendering drivers, "opengles" being a notable exception */
 		sdl.texture.texture = SDL_CreateTexture(sdl.renderer, SDL_PIXELFORMAT_ARGB8888,
 		                                        SDL_TEXTUREACCESS_STREAMING, width, height);
+
+		surface_test = SDL_CreateRGBSurface(0, width, height, 32, 0, 0, 0, 0);
+
 		/* SDL_PIXELFORMAT_ABGR8888 (not RGB) is the
 		only supported format for the "opengles" driver */
 		if (!sdl.texture.texture) {
@@ -1397,7 +1402,6 @@ static bool StartUpdate(uint8_t * &pixels, int &pitch)
 	if (!sdl.active || sdl.updating)
 		return false;
 
-	void *tex_pixels = nullptr;
 	switch (sdl.desktop.type) {
 	case SCREEN_SURFACE:
 		pixels = static_cast<uint8_t *>(sdl.surface->pixels);
@@ -1409,9 +1413,8 @@ static bool StartUpdate(uint8_t * &pixels, int &pitch)
 		sdl.updating = true;
 		return true;
 	case SCREEN_TEXTURE:
-		if (SDL_LockTexture(sdl.texture.texture, nullptr, &tex_pixels, &pitch) < 0)
-			return false;
-		pixels = static_cast<uint8_t *>(tex_pixels);
+		pixels = static_cast<uint8_t *>(surface_test->pixels);
+		pitch = surface_test->pitch;
 		sdl.updating = true;
 		return true;
 #if C_OPENGL
@@ -1480,7 +1483,12 @@ void GFX_EndUpdate( const Bit16u *changedLines ) {
 		}
 		break;
 	case SCREEN_TEXTURE:
-		SDL_UnlockTexture(sdl.texture.texture);
+		// TODO: describe why we use UpdateTexture instead
+		// of Lock/UnlockTexture
+		SDL_UpdateTexture(sdl.texture.texture,
+		                  nullptr, // update entire texture
+		                  surface_test->pixels,
+		                  surface_test->pitch);
 		SDL_RenderClear(sdl.renderer);
 		SDL_RenderCopy(sdl.renderer, sdl.texture.texture, NULL, &sdl.clip);
 		SDL_RenderPresent(sdl.renderer);
@@ -1596,6 +1604,10 @@ static void CleanupSDLResources()
 	if (sdl.texture.texture) {
 		SDL_DestroyTexture(sdl.texture.texture);
 		sdl.texture.texture = nullptr;
+	}
+	if (surface_test) {
+		SDL_FreeSurface(surface_test);
+		surface_test = nullptr;
 	}
 	if (sdl.renderer) {
 		SDL_DestroyRenderer(sdl.renderer);
