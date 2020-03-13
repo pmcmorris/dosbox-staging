@@ -552,7 +552,11 @@ static SDL_Window * GFX_SetSDLWindowMode(Bit16u width, Bit16u height, bool fulls
 		 * 2. It's a bit less glitchy to set a custom display mode for a
 		 * full screen, albeit it's still not perfect (at least on X11).
 		 */
-		const uint32_t flags = (screenType == SCREEN_OPENGL) ? SDL_WINDOW_OPENGL : 0;
+		uint32_t flags = 0;
+		if (screenType == SCREEN_OPENGL)
+			flags |= SDL_WINDOW_OPENGL;
+		else if (screenType == SCREEN_TEXTURE && !strcmp(sdl.rendererDriver, "opengl"))
+			flags |= SDL_WINDOW_OPENGL;
 
 		// Using undefined position will take care of placing and restoring the
 		// window by WM.
@@ -1986,8 +1990,13 @@ static void GUI_StartUp(Section * sec) {
 			LOG_MSG("OpenGL extension: pixel_bufer_object %d",sdl.opengl.pixel_buffer_object);
 		}
 	} /* OPENGL is requested end */
-
 #endif	//OPENGL
+
+	// if (sdl.desktop.want_type == SCREEN_TEXTURE) {
+	// 	const std::string texture_renderer = sdl.rendererDriver;
+	// 	if (texture_renderer == "opengl")
+	// 		sdl.window.default_flags |= SDL_WINDOW_OPENGL;
+	// }
 
 	if (!SetDefaultWindowMode())
 		E_Exit("Could not initialize video: %s", SDL_GetError());
