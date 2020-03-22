@@ -1,8 +1,10 @@
 name: Linux builds
-on: push
+
+on:
+  - push
+  - pull_request
 
 jobs:
-
   build_ubuntu:
     name: ${{ matrix.conf.name }}
     runs-on: ${{ matrix.conf.os }}

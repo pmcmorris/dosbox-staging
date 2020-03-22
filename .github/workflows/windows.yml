@@ -1,8 +1,10 @@
 name: Windows builds
-on: push
+
+on:
+  - push
+  - pull_request
 
 jobs:
-
   build_windows_msys2:
     name: ${{ matrix.conf.compiler }} ${{ matrix.conf.bits }}-bit
     runs-on: windows-latest
